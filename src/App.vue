@@ -1,8 +1,5 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
+  <div>我是一个小盒子</div>
   <router-view/>
 </template>
 
@@ -26,5 +23,11 @@ nav {
       color: #42b983;
     }
   }
+}
+
+div {
+  width: 300px;
+  height: 300px;
+  background-color: pink;
 }
 </style>

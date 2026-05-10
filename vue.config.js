@@ -1,4 +1,18 @@
 const { defineConfig } = require('@vue/cli-service')
+const AutoImport = require('unplugin-auto-import/webpack')
+const Components = require('unplugin-vue-components/webpack')
+const { VantResolver } = require('@vant/auto-import-resolver')
+
 module.exports = defineConfig({
-  transpileDependencies: true
+  transpileDependencies: true,
+  configureWebpack: {
+    plugins: [
+      AutoImport({
+        resolvers: [VantResolver()]
+      }),
+      Components({
+        resolvers: [VantResolver()]
+      })
+    ]
+  }
 })
