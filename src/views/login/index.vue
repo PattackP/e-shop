@@ -30,7 +30,10 @@
 
 <script setup>
 import { ref, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getCaptchaImage, sendSmsCaptcha, smsLogin } from '@/api/login'
+
+const router = useRouter()
 
 const phone = ref('')
 const msgCode = ref('')
@@ -123,9 +126,10 @@ const login = async () => {
   }
   //登录
   const res = await smsLogin(phone.value,msgCode.value)
-  console.log(res)
-  showToast('登录成功')
-  //登录成功后，跳转到首页
+  if (res.status === 200) {
+     showToast('登录成功')
+     router.push('/home')
+  }
  
 }
 
