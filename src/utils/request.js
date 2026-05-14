@@ -7,6 +7,11 @@ const request = axios.create({
 })
 
 request.interceptors.request.use(function (config) {
+    config.headers.platform = 'H5'
+    config.headers['Content-Type'] = 'application/json'
+    if (config.data && typeof config.data === 'object') {
+        config.data = JSON.stringify(config.data)
+    }
     return config
 }, function (error) {
     return Promise.reject(error)

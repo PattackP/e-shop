@@ -16,10 +16,10 @@
       </div>
       <div class="form-item" v-if="base64">
         <input  class="inp" placeholder="请输入图形验证码" type="text" v-model="picCode">
-        <img :src="base64" alt="" @click="getCaptchaImage">
+        <img :src="base64" alt="" @click="getCaptcha">
       </div>
       <div class="form-item">
-        <input  class="inp" placeholder="请输入短信验证码" type="text" v-model="msgCode">
+        <input  v-model="msgCode" class="inp" placeholder="请输入短信验证码" type="text" >
         <button @click="getMsgCode">{{ totalSecond === second ?'获取验证码':second+'秒后重新获取' }}</button>
       </div>
     </div>
@@ -30,13 +30,16 @@
 
 <script setup>
 import { ref, onUnmounted } from 'vue'
-import { getCaptchaImage, sendSmsCaptcha } from '@/api/login'
+import { getCaptchaImage, sendSmsCaptcha, smsLogin } from '@/api/login'
 
 const phone = ref('')
+const msgCode = ref('')
+
 const picCode = ref('')
-const keyCode = ref('')
 const base64 = ref('')
 const key = ref('')
+const md5 = ref('')
+
 const totalSecond = ref(60)
 const second = ref(60)
 let timer = null
@@ -64,12 +67,26 @@ const validatePicCode = () => {
   }
   return true
 }
+
+const validateSmsCode = () => {
+  if (!msgCode.value) {
+    showToast('请输入短信验证码')
+    return false
+  }
+  if (!/^\d{6}$/.test(msgCode.value)) {
+    showToast('短信验证码为6位数字')
+    return false
+  }
+  return true
+}
+
+
 //页面加载后获取验证码
 const getCaptcha = async () => {
   const res = await getCaptchaImage()    
-  keyCode.value = res.data.key
-  base64.value = res.data.base64
   key.value = res.data.key
+  base64.value = res.data.base64
+  md5.value = res.data.md5
 }
 //获取短信验证码
 const getMsgCode = async () => {
@@ -80,7 +97,7 @@ const getMsgCode = async () => {
     return
   }
   //发送短信验证码
-  const res = await sendSmsCaptcha(picCode.value, keyCode.value, phone.value)
+  const res = await sendSmsCaptcha(picCode.value, base64.value, phone.value)
   showToast('验证码已发送，请查收')
   if (!timer && second.value === totalSecond.value) {
     timer = setInterval(() => {
@@ -93,6 +110,23 @@ const getMsgCode = async () => {
     }, 1000)
    
   }
+}
+const login = async () => {
+  if (!validatePhone()) {
+    return
+  }
+  if (!validateSmsCode()) {
+    return
+  }
+  if (!validatePicCode()) {
+    return
+  }
+  //登录
+  const res = await smsLogin(phone.value,msgCode.value)
+  console.log(res)
+  showToast('登录成功')
+  //登录成功后，跳转到首页
+ 
 }
 
 onUnmounted(() => {

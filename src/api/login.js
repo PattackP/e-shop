@@ -6,8 +6,21 @@ export const getCaptchaImage = () => {
 
 export const sendSmsCaptcha = (captchaCode, captchaKey, mobile) => {
     return request.post('captcha/sendSmsCaptcha', {
-        captchaCode,
-        captchaKey,
-        mobile
+        form: {
+            captchaCode,
+            captchaKey,
+            mobile
+        }
+    })
+}
+
+export const smsLogin = (mobile, smsCode) => {
+    return request.post('/passport/login', {
+        form: {
+            mobile,
+            smsCode,
+            isParty: false,
+            partyData: {}
+        }
     })
 }
