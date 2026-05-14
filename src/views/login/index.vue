@@ -32,8 +32,10 @@
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCaptchaImage, sendSmsCaptcha, smsLogin } from '@/api/login'
+import { useStore } from 'vuex'
 
 const router = useRouter()
+const store = useStore()
 
 const phone = ref('')
 const msgCode = ref('')
@@ -83,15 +85,20 @@ const validateSmsCode = () => {
   return true
 }
 
-
-//页面加载后获取验证码
+// 页面加载后获取验证码
 const getCaptcha = async () => {
-  const res = await getCaptchaImage()    
-  key.value = res.data.key
-  base64.value = res.data.base64
-  md5.value = res.data.md5
+  try {
+    const res = await getCaptchaImage()
+    key.value = res.data.key
+    base64.value = res.data.base64
+    md5.value = res.data.md5
+  } catch (error) {
+    // 错误已在 request.js 中通过 showToast 提示，这里不需要额外处理
+    console.log('获取验证码失败:', error.message)
+  }
 }
-//获取短信验证码
+
+// 获取短信验证码
 const getMsgCode = async () => {
   if (!validatePhone()) {
     return
@@ -99,21 +106,26 @@ const getMsgCode = async () => {
   if (!validatePicCode()) {
     return
   }
-  //发送短信验证码
-  const res = await sendSmsCaptcha(picCode.value, base64.value, phone.value)
-  showToast('验证码已发送，请查收')
-  if (!timer && second.value === totalSecond.value) {
-    timer = setInterval(() => {
-      second.value--
-      if (second.value <= 0) {
-        second.value = totalSecond.value
-        clearInterval(timer)
-        timer = null
-      }
-    }, 1000)
-   
+  try {
+    // 发送短信验证码
+    const res = await sendSmsCaptcha(picCode.value, key.value, phone.value)
+    showToast('验证码已发送，请查收')
+    if (!timer && second.value === totalSecond.value) {
+      timer = setInterval(() => {
+        second.value--
+        if (second.value <= 0) {
+          second.value = totalSecond.value
+          clearInterval(timer)
+          timer = null
+        }
+      }, 1000)
+    }
+  } catch (error) {
+    // 错误已在 request.js 中通过 showToast 提示
+    console.log('发送验证码失败:', error.message)
   }
 }
+
 const login = async () => {
   if (!validatePhone()) {
     return
@@ -124,13 +136,18 @@ const login = async () => {
   if (!validatePicCode()) {
     return
   }
-  //登录
-  const res = await smsLogin(phone.value,msgCode.value)
-  if (res.status === 200) {
-     showToast('登录成功')
-     router.push('/home')
+  try {
+    // 登录
+    const res = await smsLogin(phone.value, msgCode.value)
+    if (res.status === 200) {
+      store.commit('user/setUserInfo', res.data)
+      showToast('登录成功')
+      router.push('/home')
+    }
+  } catch (error) {
+    // 错误已在 request.js 中通过 showToast 提示
+    console.log('登录失败:', error.message)
   }
- 
 }
 
 onUnmounted(() => {
@@ -146,60 +163,63 @@ getCaptcha()
 <style lang="less" scoped>
 .container {
   padding: 49px 29px;
+}
 
-  .title {
-    margin-bottom: 20px;
-    h3 {
-      font-size: 26px;
-      font-weight: normal;
-    }
-    p {
-      line-height: 40px;
-      font-size: 14px;
-      color: #b8b8b8;
-    }
+.title {
+  margin-bottom: 50px;
+
+  h3 {
+    font-size: 26px;
+    font-weight: normal;
+  }
+  p {
+    line-height: 40px;
+    font-size: 14px;
+    color: #b8b8b8;
+  }
+}
+
+.form-item {
+  border-bottom: 1px solid #f3f1f2;
+  padding: 8px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+
+  .inp {
+    display: block;
+    border: none;
+    outline: none;
+    height: 32px;
+    font-size: 14px;
+    flex: 1;
   }
 
-  .form-item {
-    border-bottom: 1px solid #f3f1f2;
-    padding: 8px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    .inp {
-      display: block;
-      border: none;
-      outline: none;
-      height: 32px;
-      font-size: 14px;
-      flex: 1;
-    }
-    img {
-      width: 94px;
-      height: 31px;
-    }
-    button {
-      height: 31px;
-      border: none;
-      font-size: 13px;
-      color: #cea26a;
-      background-color: transparent;
-      padding-right: 9px;
-    }
+  img {
+    width: 94px;
+    height: 31px;
   }
 
-  .login-btn {
-    width: 100%;
-    height: 42px;
-    margin-top: 39px;
-    background: linear-gradient(90deg,#ecb53c,#ff9211);
-    color: #fff;
-    border-radius: 39px;
-    box-shadow: 0 10px 20px 0 rgba(0,0,0,.1);
-    letter-spacing: 2px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  button {
+    height: 31px;
+    border: none;
+    font-size: 13px;
+    color: #cea26a;
+    background-color: transparent;
+    padding-right: 9px;
   }
+}
+
+.login-btn {
+  height: 42px;
+  margin-top: 39px;
+  background: linear-gradient(90deg,#ecb53c,#ff9211);
+  color: #fff;
+  border-radius: 39px;
+  box-shadow: 0 10px 20px 0 rgba(0,0,0,.1);
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
