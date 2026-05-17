@@ -30,11 +30,12 @@
 
 <script setup>
 import { ref, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getCaptchaImage, sendSmsCaptcha, smsLogin } from '@/api/login'
 import { useStore } from 'vuex'
 
 const router = useRouter()
+const route = useRoute()
 const store = useStore()
 
 const phone = ref('')
@@ -142,7 +143,10 @@ const login = async () => {
     if (res.status === 200) {
       store.commit('user/setUserInfo', res.data)
       showToast('登录成功')
-      router.push('/home')
+      // 优先跳转回原页面，否则跳转到首页
+      const redirect = route.query.redirect || '/home'
+      //记住replace和push的区别，replace会替换当前路由，push会添加新路由
+      router.replace(redirect)
     }
   } catch (error) {
     // 错误已在 request.js 中通过 showToast 提示

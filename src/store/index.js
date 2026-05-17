@@ -5,6 +5,9 @@ export default createStore({
   state: {
   },
   getters: {
+    token(state) {
+      return state.user.userInfo?.token || ''
+    }
   },
   mutations: {
   },
@@ -13,5 +16,4 @@ export default createStore({
   modules: {
     user
   }
-    
 })
